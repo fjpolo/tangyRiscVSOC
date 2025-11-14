@@ -17,6 +17,7 @@
         <File path="src/pixelGenGfx.sv" type="file.verilog" enable="1"/>
         <File path="src/pixelGenTxt.sv" type="file.verilog" enable="1"/>
         <File path="src/tangyRiscVSOC_top.sv" type="file.verilog" enable="1"/>
+        <File path="src/textureShader.sv" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host_rom.v" type="file.verilog" enable="1"/>
         <File path="src/SDRAM_controller_top_SIP/SDRAM_controller_top_SIP.vhd" type="file.vhdl" enable="1"/>
@@ -37,7 +38,6 @@
         <File path="src/sdramController.vhd" type="file.vhdl" enable="1"/>
         <File path="src/spi.vhd" type="file.vhdl" enable="1"/>
         <File path="src/systemRam/systemRam.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/textureShader.vhd" type="file.vhdl" enable="1"/>
         <File path="src/uart.vhd" type="file.vhdl" enable="1"/>
         <File path="src/uartFiFo/uartFiFo.vhd" type="file.vhdl" enable="1"/>
         <File path="src/usbHost.vhd" type="file.vhdl" enable="1"/>
