@@ -49,8 +49,8 @@ module tangyRiscVSOC_top #(
     output logic        sdMciClk,
 
     // USB Host
-    inout  logic        usbhDP,
-    inout  logic        usbhDM,
+    //inout  logic        usbhDP,
+    //inout  logic        usbhDM,
 
     // SDRAM
     output logic        O_sdram_clk,
@@ -67,7 +67,15 @@ module tangyRiscVSOC_top #(
     // --- NEW SNES Controller Ports ---
     output logic        snesLatch, // Latch (Output to controller)
     output logic        snesClk,   // Clock (Output to controller)
-    input  logic        snesData   // Data (Input from controller)
+    input  logic        snesData,   // Data (Input from controller)
+    // snes controllers
+    output joy1_strb,
+    output joy1_clk,
+    input  joy1_data
+// ,
+//    output joy2_strb,
+//    output joy2_clk,
+//    input  joy2_data
 );
 
 // ============================================================================
@@ -557,23 +565,48 @@ inputSync #(.inputWidth(2)) pggDmaRequestInputSyncInst (
     .signalOutput(pggDMARequestClkD2)
 );
 
-// --- NEW SNES Gamepad Controller Instantiation ---
-snes_gamepad_controller snesControllerInst (
-    .clk(registersClock),
-    .rst(reset),
-
-    // RISC-V Bus Interface (Bus access happens on registersClock domain)
-    // The i_bus_read_en is the chip-select for a read operation
-    .i_bus_read_en(snesControllerCE && ~cpuWr),
-    .i_bus_addr(cpuAOutFull),
-    .o_bus_rdata(snesControllerDoutForCPU),
-    .o_bus_rdy(snesControllerReady), // Will be 1'b1 because read is instantaneous
-
-    // SNES Controller Physical Interface (Exposed to top-level ports)
-    .o_snes_latch(snesLatch),
-    .o_snes_clk(snesClk),
-    .i_snes_data(snesData)
+//
+// SNES GAMEPAD
+//
+wor [11:0] joy1_btns, joy2_btns; 
+wire [7:0] joy_rx[0:1], joy_rx2[0:1];     // 6 RX bytes for all button/axis state
+wire [7:0] usb_btn, usb_btn2;
+wire usb_btn_x, usb_btn_y, usb_btn_x2, usb_btn_y2;
+wire usb_conerr, usb_conerr2;
+wire auto_a, auto_b, auto_a2, auto_b2;
+wire [2:0] joypad_out;
+wire joypad_strobe = joypad_out[0];
+wire [1:0] joypad_clock;
+wire [4:0] joypad1_data, joypad2_data;
+reg [7:0] joypad_bits, joypad_bits2;
+reg [1:0] last_joypad_clock;
+controller_snes joy1_snes (
+    .clk(clk), .resetn(sys_resetn), .buttons(joy1_btns),
+    .joy_strb(joy1_strb), .joy_clk(joy1_clk), .joy_data(joy1_data)
 );
+//controller_snes joy2_snes (
+//    .clk(clk), .resetn(sys_resetn), .buttons(joy2_btns),
+//    .joy_strb(joy2_strb), .joy_clk(joy2_clk), .joy_data(joy2_data)
+//);
+// Autofire for NES A (right) and B (left) buttons
+Autofire af_a (.clk(clk), .resetn(sys_resetn), .btn(joy1_btns[8]), .out(auto_a));
+Autofire af_b (.clk(clk), .resetn(sys_resetn), .btn(joy1_btns[9]), .out(auto_b));
+//Autofire af_a2 (.clk(clk), .resetn(sys_resetn), .btn(joy2_btns[8]), .out(auto_a2));
+//Autofire af_b2 (.clk(clk), .resetn(sys_resetn), .btn(joy2_btns[9]), .out(auto_b2));
+// Joypad handling
+always @(posedge clk) begin
+    if (joypad_strobe) begin
+        joypad_bits <= {joy1_btns[7:2], joy1_btns[1] | auto_b, joy1_btns[0] | auto_a};;
+        joypad_bits2 <= {joy2_btns[7:2], joy2_btns[1] | auto_b2, joy2_btns[0] | auto_a2};
+    end
+    if (!joypad_clock[0] && last_joypad_clock[0])
+        joypad_bits <= {1'b1, joypad_bits[7:1]};
+    if (!joypad_clock[1] && last_joypad_clock[1])
+        joypad_bits2 <= {1'b1, joypad_bits2[7:1]};
+    last_joypad_clock <= joypad_clock;
+end
+assign joypad1_data[0] = joypad_bits[0];
+assign joypad2_data[0] = joypad_bits2[0];
 
 // ============================================================================
 // CONDITIONAL IP INSTANTIATIONS
