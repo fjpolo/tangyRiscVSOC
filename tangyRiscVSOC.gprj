@@ -8,6 +8,7 @@
         <File path="src/InputSync.sv" type="file.verilog" enable="1"/>
         <File path="src/blitter.sv" type="file.verilog" enable="1"/>
         <File path="src/gouraudEdge.sv" type="file.verilog" enable="1"/>
+        <File path="src/gouraudWeight.sv" type="file.verilog" enable="1"/>
         <File path="src/picorv32.v" type="file.verilog" enable="1"/>
         <File path="src/tangyRiscVSOC_top.sv" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host.v" type="file.verilog" enable="1"/>
@@ -25,7 +26,6 @@
         <File path="src/gfxBufRam/gfxBufRam.vhd" type="file.vhdl" enable="1"/>
         <File path="src/gouraudIterator.vhd" type="file.vhdl" enable="1"/>
         <File path="src/gouraudIterator16.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/gouraudWeight.vhd" type="file.vhdl" enable="1"/>
         <File path="src/i2sController.vhd" type="file.vhdl" enable="1"/>
         <File path="src/i2sControllerFifo/i2sControllerFifo.vhd" type="file.vhdl" enable="1"/>
         <File path="src/keyboardFifo/keyboardFifo.vhd" type="file.vhdl" enable="1"/>
