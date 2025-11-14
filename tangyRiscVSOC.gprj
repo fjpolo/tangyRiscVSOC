@@ -6,13 +6,13 @@
     <Device name="GW2AR-18C" pn="GW2AR-LV18QN88C8/I7">gw2ar18c-000</Device>
     <FileList>
         <File path="src/InputSync.sv" type="file.verilog" enable="1"/>
+        <File path="src/blitter.sv" type="file.verilog" enable="1"/>
+        <File path="src/gouraudEdge.sv" type="file.verilog" enable="1"/>
         <File path="src/picorv32.v" type="file.verilog" enable="1"/>
         <File path="src/tangyRiscVSOC_top.sv" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host_rom.v" type="file.verilog" enable="1"/>
-        <File path="src/InputSync.vhd" type="file.vhdl" enable="0"/>
         <File path="src/SDRAM_controller_top_SIP/SDRAM_controller_top_SIP.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/blitter.vhd" type="file.vhdl" enable="1"/>
         <File path="src/clkdiv5/clkdiv5.vhd" type="file.vhdl" enable="1"/>
         <File path="src/divider32s/divider32s.vhd" type="file.vhdl" enable="1"/>
         <File path="src/dvi_tx/dvi_tx.vhd" type="file.vhdl" enable="1"/>
@@ -23,7 +23,6 @@
         <File path="src/fpMult/fpMult.vhd" type="file.vhdl" enable="1"/>
         <File path="src/fpSub/fpSub.vhd" type="file.vhdl" enable="1"/>
         <File path="src/gfxBufRam/gfxBufRam.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/gouraudEdge.vhd" type="file.vhdl" enable="1"/>
         <File path="src/gouraudIterator.vhd" type="file.vhdl" enable="1"/>
         <File path="src/gouraudIterator16.vhd" type="file.vhdl" enable="1"/>
         <File path="src/gouraudWeight.vhd" type="file.vhdl" enable="1"/>
@@ -38,7 +37,6 @@
         <File path="src/sdramController.vhd" type="file.vhdl" enable="1"/>
         <File path="src/spi.vhd" type="file.vhdl" enable="1"/>
         <File path="src/systemRam/systemRam.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/tangyRiscVSOCTop.vhd" type="file.vhdl" enable="0"/>
         <File path="src/textureShader.vhd" type="file.vhdl" enable="1"/>
         <File path="src/uart.vhd" type="file.vhdl" enable="1"/>
         <File path="src/uartFiFo/uartFiFo.vhd" type="file.vhdl" enable="1"/>
