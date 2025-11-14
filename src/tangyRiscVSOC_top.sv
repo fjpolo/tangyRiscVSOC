@@ -49,8 +49,8 @@ module tangyRiscVSOC_top #(
     output logic        sdMciClk,
 
     // USB Host
-    //inout  logic        usbhDP,
-    //inout  logic        usbhDM,
+    inout  logic        usbhDP,
+    inout  logic        usbhDM,
 
     // SDRAM
     output logic        O_sdram_clk,
@@ -64,10 +64,6 @@ module tangyRiscVSOC_top #(
     output logic [1:0]  O_sdram_ba,
     inout  logic [31:0] IO_sdram_dq,
 
-    // --- NEW SNES Controller Ports ---
-    output logic        snesLatch,  // Latch (Output to controller)
-    output logic        snesClk,    // Clock (Output to controller)
-    input  logic        snesData,   // Data (Input from controller)
     // snes controllers
     output joy1_strb,
     output joy1_clk,
@@ -77,8 +73,6 @@ module tangyRiscVSOC_top #(
 //    output joy2_clk,
 //    input  joy2_data
 );
-wire       usbhDP;
-wire        usbhDM;
 
 // ============================================================================
 // SIGNAL DECLARATIONS
