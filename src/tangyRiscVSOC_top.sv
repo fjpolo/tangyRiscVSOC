@@ -65,8 +65,8 @@ module tangyRiscVSOC_top #(
     inout  logic [31:0] IO_sdram_dq,
 
     // --- NEW SNES Controller Ports ---
-    output logic        snesLatch, // Latch (Output to controller)
-    output logic        snesClk,   // Clock (Output to controller)
+    output logic        snesLatch,  // Latch (Output to controller)
+    output logic        snesClk,    // Clock (Output to controller)
     input  logic        snesData,   // Data (Input from controller)
     // snes controllers
     output joy1_strb,
@@ -77,6 +77,8 @@ module tangyRiscVSOC_top #(
 //    output joy2_clk,
 //    input  joy2_data
 );
+wire       usbhDP;
+wire        usbhDM;
 
 // ============================================================================
 // SIGNAL DECLARATIONS
