@@ -13,6 +13,9 @@
         <File path="src/gouraudIterator16.sv" type="file.verilog" enable="1"/>
         <File path="src/gouraudWeight.sv" type="file.verilog" enable="1"/>
         <File path="src/picorv32.v" type="file.verilog" enable="1"/>
+        <File path="src/pixelAlpha.sv" type="file.verilog" enable="1"/>
+        <File path="src/pixelGenGfx.sv" type="file.verilog" enable="1"/>
+        <File path="src/pixelGenTxt.sv" type="file.verilog" enable="1"/>
         <File path="src/tangyRiscVSOC_top.sv" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host.v" type="file.verilog" enable="1"/>
         <File path="src/usb_hid_host_rom.v" type="file.verilog" enable="1"/>
@@ -29,9 +32,6 @@
         <File path="src/i2sController.vhd" type="file.vhdl" enable="1"/>
         <File path="src/i2sControllerFifo/i2sControllerFifo.vhd" type="file.vhdl" enable="1"/>
         <File path="src/keyboardFifo/keyboardFifo.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/pixelAlpha.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/pixelGenGfx.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/pixelGenTxt.vhd" type="file.vhdl" enable="1"/>
         <File path="src/pllHDMI/pllHDMI.vhd" type="file.vhdl" enable="1"/>
         <File path="src/pllSystem/pllSystem.vhd" type="file.vhdl" enable="1"/>
         <File path="src/sdramController.vhd" type="file.vhdl" enable="1"/>
