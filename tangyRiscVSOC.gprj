@@ -6,7 +6,9 @@
     <Device name="GW2AR-18C" pn="GW2AR-LV18QN88C8/I7">gw2ar18c-000</Device>
     <FileList>
         <File path="src/InputSync.sv" type="file.verilog" enable="1"/>
+        <File path="src/autofire.v" type="file.verilog" enable="1"/>
         <File path="src/blitter.sv" type="file.verilog" enable="1"/>
+        <File path="src/controller_snes.v" type="file.verilog" enable="1"/>
         <File path="src/fpAlu.sv" type="file.verilog" enable="1"/>
         <File path="src/gouraudEdge.sv" type="file.verilog" enable="1"/>
         <File path="src/gouraudIterator.sv" type="file.verilog" enable="1"/>

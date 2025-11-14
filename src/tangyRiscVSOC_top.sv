@@ -5,14 +5,18 @@ module tangyRiscVSOC_top #(
     parameter instHidUSBHost = 1,
     parameter instI2SAudio = 1
 )(
-    // [Port declarations remain the same...]
-    input  logic        extPllClock25,
-    input  logic        extPllClock12,
-    input  logic        oscClock27,
-    input  logic        buttonReset,
-    input  logic        buttonUser,
+    // Clocks and Reset
+    input  logic         extPllClock25,
+    input  logic         extPllClock12,
+    input  logic         oscClock27,
+    input  logic         buttonReset,
+    input  logic         buttonUser,
+
+    // LEDs
     output logic [5:0]  leds,
     output logic        rgbLedDout,
+
+    // HDMI Ports
     output logic        O_tmds_clk_p,
     output logic        O_tmds_clk_n,
     output logic [2:0]  O_tmds_data_p,
@@ -20,23 +24,35 @@ module tangyRiscVSOC_top #(
     inout  logic        dviCEC,
     inout  logic        dviEdidClk,
     inout  logic        dviEdidDat,
+
+    // I2S Audio
     output logic        i2sSDMode,
     output logic        i2sBClk,
     output logic        i2sLRCk,
     output logic        i2sDOut,
+
+    // UART (Tang Nano/External)
     output logic        tangUartTx,
     input  logic        tangUartRx,
+    output logic        extUartTx,
+    input  logic        extUartRx,
+
+    // Flash SPI
     output logic        tangFlashCSn,
     output logic        tangFlashClk,
     output logic        tangFlashMOSI,
     input  logic        tangFlashMISO,
-    output logic        extUartTx,
-    input  logic        extUartRx,
+
+    // SD Card
     inout  logic [3:0]  sdMciDat,
     output logic        sdMciCmd,
     output logic        sdMciClk,
+
+    // USB Host
     inout  logic        usbhDP,
     inout  logic        usbhDM,
+
+    // SDRAM
     output logic        O_sdram_clk,
     output logic        O_sdram_cke,
     output logic        O_sdram_cs_n,
@@ -46,25 +62,29 @@ module tangyRiscVSOC_top #(
     output logic [3:0]  O_sdram_dqm,
     output logic [10:0] O_sdram_addr,
     output logic [1:0]  O_sdram_ba,
-    inout  logic [31:0] IO_sdram_dq
+    inout  logic [31:0] IO_sdram_dq,
+
+    // --- NEW SNES Controller Ports ---
+    output logic        snesLatch, // Latch (Output to controller)
+    output logic        snesClk,   // Clock (Output to controller)
+    input  logic        snesData   // Data (Input from controller)
 );
 
 // ============================================================================
 // SIGNAL DECLARATIONS
 // ============================================================================
 
-// [All signal declarations remain the same...]
-// Domain 1 - pllHDMI
+// Domain 1 - pllHDMI (25MHz input clock)
 logic clk25;
 logic clk125;
 logic clk125ps;
 logic clk41_66;
 
-// Domain 2 - pllSystem
-logic clkd2_80;
-logic clkd2_80ps;
-logic clkd2_40;
-logic clkd2_20;
+// Domain 2 - pllSystem (80MHz system clock derived from 25MHz)
+logic clkd2_80;     // 80MHz CPU memory / peripheral clock
+logic clkd2_80ps;   // 80MHz phase-shifted (for SDRAM)
+logic clkd2_40;     // 40MHz CPU clock
+logic clkd2_20;     // 20MHz (unused in current logic, typically)
 
 // Reset
 logic reset;
@@ -74,7 +94,7 @@ logic resetn;
 logic pllHDMILocked;
 
 // HDMI encoder
-logic dviClock;
+logic dviClock;     // clk125
 logic dviVs;
 logic dviHs;
 logic dviDe;
@@ -83,7 +103,7 @@ logic [7:0] dviG;
 logic [7:0] dviB;
 
 // SDRAM controller signals
-logic sdramClock;
+logic sdramClock;   // clkd2_80ps
 
 // Video mux signals
 logic [15:0] vmMode;
@@ -93,7 +113,7 @@ logic [10:0] fontRomA;
 logic [7:0]  fontRomDout;
 
 // Text pixel gen signals
-logic pgClock;
+logic pgClock;      // clk25
 logic pgVSync;
 logic pgHSync;
 logic pgDe;
@@ -140,7 +160,7 @@ typedef enum logic [2:0] {
 systemRamAccessState_T systemRamAccessState;
 
 // CPU signals
-logic cpuClock;
+logic cpuClock;     // clkd2_40
 logic cpuResetn;
 logic [29:0] cpuAOut;
 logic [31:0] cpuDOut;
@@ -156,30 +176,28 @@ logic [3:0] cpuDataMask;
 // CPU reset generation
 logic [15:0] cpuResetGenCounter;
 
-// GPO signals
+// GPO signals (General Purpose Output - often used for registers/video mode)
 logic [31:0] gpoRegister;
 
-// Registers signals
+// Registers signals (MMIO 0xF00)
 logic registersClock;
-
+// Existing register state machine (not used in current logic, keeping for structure)
 typedef enum logic {
     rsWaitForRegAccess,
     rsWaitForBusCycleEnd
 } regState_T;
-
 regState_T registerState;
 logic registersCE;
 logic [31:0] registersDoutForCPU;
 
-// Tick timer signals
+// Tick timer signals (MMIO 0xF00)
 logic tickTimerClock;
 logic tickTimerReset;
 logic [31:0] tickTimerPrescalerCounter;
 logic [31:0] tickTimerCounter;
+localparam tickTimerPrescalerValue = 40000 - 1; // 1ms tick timer @40MHz
 
-localparam tickTimerPrescalerValue = 40000 - 1;  // 1ms tick timer @40MHz
-
-// Frame timer signals
+// Frame timer signals (MMIO 0xF00)
 logic frameTimerClock;
 logic frameTimerReset;
 logic frameTimerPgPrvVSync;
@@ -209,12 +227,12 @@ logic [21:0] dmaCh2A;
 logic dmaCh2TransferSize;
 logic [1:0] dmaCh2TransferMask;
 
-// DMA ch3 signals (CPU)
+// DMA ch3 signals (CPU - MMIO 0x20)
 logic dmaMemoryCE;
 logic cpuDmaReady;
 logic [31:0] dmaDoutForCPU;
 
-// UART signals
+// UART signals (MMIO 0xF04)
 logic uartClock;
 logic uartCE;
 logic [31:0] uartDoutForCPU;
@@ -222,7 +240,7 @@ logic uartReady;
 logic uartTxd;
 logic uartRxd;
 
-// SPI signals
+// SPI signals (SD Card - MMIO 0xF05)
 logic spiClock;
 logic spiCE;
 logic [31:0] spiDoutForCPU;
@@ -231,7 +249,7 @@ logic spiSClk;
 logic spiMOSI;
 logic spiMISO;
 
-// Tang flash SPI signals
+// Tang flash SPI signals (MMIO 0xF07)
 logic flashSpiClock;
 logic flashSpiCE;
 logic [31:0] flashSpiDoutForCPU;
@@ -240,7 +258,7 @@ logic flashSpiSClk;
 logic flashSpiMOSI;
 logic flashSpiMISO;
 
-// USB host signals
+// USB host signals (MMIO 0xF03)
 logic usbHostClock;
 logic usbHostCE;
 logic usbHostReady;
@@ -249,23 +267,28 @@ logic [31:0] usbHostDoutForCPU;
 // USB phy clock (12 MHz)
 logic usbHClk;
 
-// Blitter signals
+// Blitter signals (MMIO 0xF02)
 logic blitterClock;
 logic blitterCE;
 logic blitterReady;
 logic [31:0] blitterDoutForCPU;
 
-// FPALU signals
+// FPALU signals (MMIO 0xF01)
 logic fpAluClock;
 logic fpAluCE;
 logic [31:0] fpAluDoutForCPU;
 logic fpAluReady;
 
-// I2S controller signals
+// I2S controller signals (MMIO 0xF06)
 logic i2sControllerClock;
 logic i2sCE;
 logic [31:0] i2sDoutForCPU;
 logic i2sReady;
+
+// --- NEW SNES Controller Signals (MMIO 0xF08) ---
+logic snesControllerCE;
+logic snesControllerReady;
+logic [31:0] snesControllerDoutForCPU;
 
 // ============================================================================
 // COMPONENT INSTANTIATIONS
@@ -358,7 +381,7 @@ pixelGenGfx pixelGenGfxInst (
     .gfxBufRamRdA(gfxBufRamRdA),
     .pggDMARequest(pggDMARequest),
     .pgVSync(pgVSync),
-    .pgHSync(pgHSync),
+    .pgHSync(pgHs),
     .pgDe(pgDe),
     .pgXCount(pgXCount),
     .pgYCount(pgYCount),
@@ -534,6 +557,24 @@ inputSync #(.inputWidth(2)) pggDmaRequestInputSyncInst (
     .signalOutput(pggDMARequestClkD2)
 );
 
+// --- NEW SNES Gamepad Controller Instantiation ---
+snes_gamepad_controller snesControllerInst (
+    .clk(registersClock),
+    .rst(reset),
+
+    // RISC-V Bus Interface (Bus access happens on registersClock domain)
+    // The i_bus_read_en is the chip-select for a read operation
+    .i_bus_read_en(snesControllerCE && ~cpuWr),
+    .i_bus_addr(cpuAOutFull),
+    .o_bus_rdata(snesControllerDoutForCPU),
+    .o_bus_rdy(snesControllerReady), // Will be 1'b1 because read is instantaneous
+
+    // SNES Controller Physical Interface (Exposed to top-level ports)
+    .o_snes_latch(snesLatch),
+    .o_snes_clk(snesClk),
+    .i_snes_data(snesData)
+);
+
 // ============================================================================
 // CONDITIONAL IP INSTANTIATIONS
 // ============================================================================
@@ -616,7 +657,6 @@ endgenerate
 // COMBINATIONAL LOGIC
 // ============================================================================
 
-// [All combinational logic remains the same...]
 // Reset logic based on PLL lock
 assign reset = ~pllHDMILocked;
 assign resetn = ~reset;
@@ -648,9 +688,9 @@ assign cpuAOut = cpuAOutFull[31:2];
 assign cpuWr = |cpuWrStrobe;
 assign cpuDataMask = cpuWr ? cpuWrStrobe : 4'b1111;
 
-// Chip selects
+// Chip selects (MMIO Decoding based on cpuAOutFull[31:20])
 assign systemRAMCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'h000));
-assign dmaMemoryCE = (cpuMemValid && (cpuAOutFull[31:24] == 8'h20));
+assign dmaMemoryCE = (cpuMemValid && (cpuAOutFull[31:24] == 8'h20)); // Base 0x20000000
 assign registersCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf00));
 assign fpAluCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf01));
 assign blitterCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf02));
@@ -659,20 +699,22 @@ assign uartCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf04));
 assign spiCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf05));
 assign i2sCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf06));
 assign flashSpiCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf07));
+assign snesControllerCE = (cpuMemValid && (cpuAOutFull[31:20] == 12'hf08)); // SNES at 0xF0800000
 
 // Bus slaves ready signals mux
-assign cpuMemReady = 
+assign cpuMemReady =
     systemRAMCE ? systemRamReady :
     uartCE ? uartReady :
     spiCE ? spiReady :
     usbHostCE ? usbHostReady :
-    registersCE ? 1'b1 :
+    registersCE ? 1'b1 : // Assuming registers are always ready
     dmaMemoryCE ? cpuDmaReady :
     blitterCE ? blitterReady :
     fpAluCE ? fpAluReady :
     i2sCE ? i2sReady :
     flashSpiCE ? flashSpiReady :
-    1'b1;
+    snesControllerCE ? snesControllerReady :
+    1'b1; // Default ready
 
 // Bus slaves data outputs mux
 always_comb begin
@@ -682,11 +724,12 @@ always_comb begin
         12'hf05: cpuDin = spiDoutForCPU;
         12'hf03: cpuDin = usbHostDoutForCPU;
         12'hf00: cpuDin = registersDoutForCPU;
-        12'h020: cpuDin = dmaDoutForCPU;  // 8'h20 range
+        12'h020: cpuDin = dmaDoutForCPU;  // 8'h20 range (DRAM)
         12'hf02: cpuDin = blitterDoutForCPU;
         12'hf01: cpuDin = fpAluDoutForCPU;
         12'hf06: cpuDin = i2sDoutForCPU;
         12'hf07: cpuDin = flashSpiDoutForCPU;
+        12'hf08: cpuDin = snesControllerDoutForCPU; // SNES Controller
         default: cpuDin = 32'h00000000;
     endcase
 end
@@ -696,18 +739,20 @@ generate
     if (useTangUART) begin : useTangUARTGen
         assign tangUartTx = uartTxd;
         assign uartRxd = tangUartRx;
+        assign extUartTx = 1'bZ; // Tristate external Tx
     end else begin
         assign extUartTx = uartTxd;
         assign uartRxd = extUartRx;
+        assign tangUartTx = 1'bZ; // Tristate Tang Nano Tx
     end
 endgenerate
 
 // SD card SPI connections
 assign sdMciClk = spiSClk;
-assign sdMciDat[3] = gpoRegister[0];  // CS
+assign sdMciDat[3] = gpoRegister[0];  // CS pin controlled by GPO (0x00)
 assign sdMciCmd = spiMOSI;
 assign spiMISO = sdMciDat[0];
-assign sdMciDat[2:0] = 3'bzzz;
+assign sdMciDat[2:0] = 3'bzzz; // Dat[2:0] are unused in SPI mode
 
 // Tang flash SPI connections
 assign tangFlashCSn = gpoRegister[8];
@@ -718,16 +763,15 @@ assign flashSpiMISO = tangFlashMISO;
 // GFX pixel gen enable
 assign pgEnabled = (vmMode[1:0] != 2'b00);
 
-// Video RAM data output
-assign videoRamBDout = videoRamBA[0] ? systemRamDoutForPixelGen[31:16] : 
+// Video RAM data output (Selects the 16-bit word from the 32-bit word line based on LSB of address)
+assign videoRamBDout = videoRamBA[0] ? systemRamDoutForPixelGen[31:16] :
                                        systemRamDoutForPixelGen[15:0];
 
 // ============================================================================
 // SEQUENTIAL LOGIC PROCESSES
 // ============================================================================
 
-// [All sequential processes remain the same...]
-// System RAM access process
+// System RAM access process (Handles R/W, 32-bit Write, and Read-Modify-Write)
 always_ff @(posedge fpgaCpuMemoryClock) begin
     if (reset) begin
         systemRamAccessState <= srasIdle;
@@ -739,7 +783,7 @@ always_ff @(posedge fpgaCpuMemoryClock) begin
             srasIdle: begin
                 systemRamReady <= 1'b0;
                 systemRamWr <= 1'b0;
-                
+
                 if (systemRAMCE) begin
                     if (~cpuWr) begin
                         // Read (always 32 bit)
@@ -759,7 +803,7 @@ always_ff @(posedge fpgaCpuMemoryClock) begin
                     end
                 end
             end
-            
+
             srasRead0: begin
                 systemRamReady <= 1'b1;
                 if (~systemRAMCE) begin
@@ -767,12 +811,12 @@ always_ff @(posedge fpgaCpuMemoryClock) begin
                     systemRamAccessState <= srasIdle;
                 end
             end
-            
+
             srasReadModifyWrite0: begin
                 // Read wait state
                 systemRamAccessState <= srasReadModifyWrite1;
             end
-            
+
             srasReadModifyWrite1: begin
                 // Modify and write
                 systemRamDataIn[7:0]   = cpuDataMask[0] ? cpuDOut[7:0]   : systemRamDoutForCPU[7:0];
@@ -782,7 +826,7 @@ always_ff @(posedge fpgaCpuMemoryClock) begin
                 systemRamWr <= 1'b1;
                 systemRamAccessState <= srasReadModifyWrite2;
             end
-            
+
             srasReadModifyWrite2: begin
                 systemRamReady <= 1'b1;
                 if (~systemRAMCE) begin
@@ -791,7 +835,7 @@ always_ff @(posedge fpgaCpuMemoryClock) begin
                     systemRamAccessState <= srasIdle;
                 end
             end
-            
+
             default: begin
                 systemRamAccessState <= srasIdle;
             end
@@ -809,7 +853,7 @@ always_ff @(posedge cpuClock) begin
             cpuResetn <= 1'b0;
             cpuResetGenCounter <= cpuResetGenCounter - 1'b1;
         end else begin
-            cpuResetn <= ~buttonUser;
+            cpuResetn <= ~buttonUser; // Release reset when counter is 0, unless button is held
         end
     end
 end
