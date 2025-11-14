@@ -5,16 +5,14 @@ module tangyRiscVSOC_top #(
     parameter instHidUSBHost = 1,
     parameter instI2SAudio = 1
 )(
-    // onboard peripherals
-    input  logic        extPllClock25,      // pin 10, aux pll output 0
-    input  logic        extPllClock12,      // pin 11, aux pll output 1
-    input  logic        oscClock27,         // pin 4
-    input  logic        buttonReset,        // high active
-    input  logic        buttonUser,         // high active
+    // [Port declarations remain the same...]
+    input  logic        extPllClock25,
+    input  logic        extPllClock12,
+    input  logic        oscClock27,
+    input  logic        buttonReset,
+    input  logic        buttonUser,
     output logic [5:0]  leds,
     output logic        rgbLedDout,
-    
-    // hdmi
     output logic        O_tmds_clk_p,
     output logic        O_tmds_clk_n,
     output logic [2:0]  O_tmds_data_p,
@@ -22,37 +20,23 @@ module tangyRiscVSOC_top #(
     inout  logic        dviCEC,
     inout  logic        dviEdidClk,
     inout  logic        dviEdidDat,
-    
-    // i2s
     output logic        i2sSDMode,
     output logic        i2sBClk,
     output logic        i2sLRCk,
     output logic        i2sDOut,
-    
-    // tang uart
     output logic        tangUartTx,
     input  logic        tangUartRx,
-    
-    // configuration flash
     output logic        tangFlashCSn,
     output logic        tangFlashClk,
     output logic        tangFlashMOSI,
     input  logic        tangFlashMISO,
-    
-    // ext uart
     output logic        extUartTx,
     input  logic        extUartRx,
-    
-    // sd card 
     inout  logic [3:0]  sdMciDat,
     output logic        sdMciCmd,
     output logic        sdMciClk,
-    
-    // usb host
-    inout  logic        usbhDP,             // D+ pin 27
-    inout  logic        usbhDM,             // D- pin 28
-    
-    // internal sdram
+    inout  logic        usbhDP,
+    inout  logic        usbhDM,
     output logic        O_sdram_clk,
     output logic        O_sdram_cke,
     output logic        O_sdram_cs_n,
@@ -66,9 +50,10 @@ module tangyRiscVSOC_top #(
 );
 
 // ============================================================================
-// SIGNAL DECLARATIONS - MUST COME BEFORE ANY INSTANTIATIONS OR LOGIC
+// SIGNAL DECLARATIONS
 // ============================================================================
 
+// [All signal declarations remain the same...]
 // Domain 1 - pllHDMI
 logic clk25;
 logic clk125;
@@ -631,6 +616,7 @@ endgenerate
 // COMBINATIONAL LOGIC
 // ============================================================================
 
+// [All combinational logic remains the same...]
 // Reset logic based on PLL lock
 assign reset = ~pllHDMILocked;
 assign resetn = ~reset;
@@ -740,6 +726,7 @@ assign videoRamBDout = videoRamBA[0] ? systemRamDoutForPixelGen[31:16] :
 // SEQUENTIAL LOGIC PROCESSES
 // ============================================================================
 
+// [All sequential processes remain the same...]
 // System RAM access process
 always_ff @(posedge fpgaCpuMemoryClock) begin
     if (reset) begin
@@ -826,7 +813,5 @@ always_ff @(posedge cpuClock) begin
         end
     end
 end
-
-// [Additional sequential processes for registers, tick timer, frame timer, video mux...]
 
 endmodule
